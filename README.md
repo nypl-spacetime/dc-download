@@ -19,3 +19,7 @@ Run `dc-download --help` for command-line options.
 [New York City directory, 1880/81](https://digitalcollections.nypl.org/items/12df7770-6bde-0134-5d34-00505686a51c#/):
 
     dc-download 4b5c40e0-317a-0134-e9c9-00505686a51c
+
+How to find the UUID of a book in Digital Collections:
+
+![](find-uuid.gif)
