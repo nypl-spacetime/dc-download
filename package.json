@@ -1,0 +1,27 @@
+{
+  "name": "@nypl/dc-download",
+  "version": "0.0.1",
+  "description": "Command-line tool for downloading images from NYPL's Digital Collections",
+  "main": "index.js",
+  "bin": {
+    "dc-download": "index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nypl-spacetime/dc-download"
+  },
+  "scripts": {
+    "test": "standard"
+  },
+  "author": "Bert Spaan",
+  "license": "ISC",
+  "devDependencies": {
+    "standard": "^5.4.1"
+  },
+  "dependencies": {
+    "digital-collections": "^0.1.4",
+    "got": "^6.7.1",
+    "highland": "^2.10.5",
+    "minimist": "^1.2.0"
+  }
+}
