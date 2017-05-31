@@ -24,6 +24,7 @@ const path = require('path')
 const fs = require('fs')
 const H = require('highland')
 const got = require('got')
+const chalk = require('chalk')
 const digitalCollections = require('digital-collections')
 
 const sizes = [
@@ -83,26 +84,32 @@ const sizes = [
   }
 ]
 
+let errors = []
 let showHelp = false
 
-if (argv._.length !== 1) {
+if (argv.help || argv._.length === 0) {
   showHelp = true
 }
 
-if (argv.help) {
-  showHelp = true
+if (argv._.length > 1) {
+  errors.push('Please supply no more than one item')
 }
 
 if (!sizes.map((size) => size.type).includes(argv.size)) {
-  showHelp = true
+  errors.push('Image size invalid')
 }
 
-if (showHelp) {
+if (!argv.token && !process.env.DIGITAL_COLLECTIONS_TOKEN) {
+  errors.push('Digital Collections API access token not set')
+}
+
+if (showHelp || errors.length) {
   const help = [
+    errors.length ? `${chalk.red(errors.join('\n'))}\n` : null,
     'NYPL Digital Collections Image Downloader - see https://github.com/nypl-spacetime/dc-download',
     '',
     'Usage: dc-download [-h] [-n] [-t <api-token>] [-o <path>] [-s <size>] <uuid-of-item>',
-    '  -t, --token     API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
+    '  -t, --token     Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
     '  -s, --size      size/type of images to be downloaded - see below',
     '  -u, --uuids     use UUIDs of captures for filenames (instead of page number)',
     '  -o, --output    output directory, default is current directory',
@@ -114,8 +121,8 @@ if (showHelp) {
     'Go to http://digitalcollections.nypl.org/ to browse NYPL\'s Digital Collections'
   ]
 
-  console.log(help.join('\n'))
-  process.exit(0)
+  console.log(help.join('\n').trim())
+  process.exit(errors.length ? 1 : 0)
 }
 
 function download (url, destination, callback) {
@@ -134,7 +141,8 @@ function imageUrl (imageId, size) {
 }
 
 const options = {
-  uuid: '4b00bf60-317a-0134-32d0-00505686a51c'
+  uuid: '4b00bf60-317a-0134-32d0-00505686a51c',
+  token: argv.token || process.env.DIGITAL_COLLECTIONS_TOKEN
 }
 
 let count = 0
