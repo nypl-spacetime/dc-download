@@ -96,9 +96,13 @@ if (argv._.length > 1) {
   errors.push('Please supply no more than one item')
 }
 
+const uuid = argv._[0]
+
 if (!sizes.map((size) => size.type).includes(argv.size)) {
   errors.push('Image size invalid')
 }
+
+const defaultSize = sizes.filter((size) => size.default)[0].type
 
 if (!argv.token && !process.env.DIGITAL_COLLECTIONS_TOKEN) {
   errors.push('Digital Collections API access token not set')
@@ -111,9 +115,9 @@ if (showHelp || errors.length) {
     '',
     'Usage: dc-download [-h] [-n] [-t <api-token>] [-o <path>] [-s <size>] <uuid-of-item>',
     '  -t, --token     Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
-    '  -s, --size      size/type of images to be downloaded - see below',
+    `  -s, --size      size/type of images to be downloaded - see below (default is ${defaultSize})`,
     '  -u, --uuids     use UUIDs of captures for filenames (instead of page number)',
-    '  -o, --output    output directory, default is current directory',
+    '  -o, --output    output directory (default is current directory)',
     '',
     'Possible image sizes and types:',
     ...sizes.map((size) => `  ${size.type}    ${size.description}${size.pdOnly ? '*' : ''}`),
