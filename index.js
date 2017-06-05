@@ -62,6 +62,7 @@ const sizes = [
     type: 'q',
     description: 'cropped .jpeg (1600 pixels on the long side)',
     extension: 'jpeg',
+    default: true,
     pdOnly: true
   },
   {
@@ -141,7 +142,7 @@ function imageUrl (imageId, size) {
 }
 
 const options = {
-  uuid: '4b00bf60-317a-0134-32d0-00505686a51c',
+  uuid,
   token: argv.token || process.env.DIGITAL_COLLECTIONS_TOKEN
 }
 
