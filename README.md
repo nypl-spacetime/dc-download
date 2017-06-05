@@ -4,7 +4,7 @@ Command-line tool for downloading images from [NYPL's Digital Collections](https
 
 ## Installation
 
-    npm install -g @nypl/dc-download
+    npm install -g nypl-spacetime/dc-download
 
 ## Usage
 
