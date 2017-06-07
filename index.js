@@ -145,7 +145,7 @@ if (showHelp || errors.length) {
   const help = [
     'NYPL Digital Collections Image Downloader - see https://github.com/nypl-spacetime/dc-download',
     '',
-    'Usage: dc-download [-h] [-n] [-t <api-token>] [-o <path>] [-f <filename>] [-s <size>] <uuid-of-item>',
+    'Usage: dc-download [-h] [-t <api-token>] [-o <path>] [-f <filename>] [-s <size>] <uuid-of-item>',
     '   -t, --token      Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
     `   -s, --size       size/type of images to be downloaded - see below (default is "${defaultSize}")`,
     `   -f, --filename   fields to be used as filename for downloaded files - see below (default is "${argvOptions.default.f}")`,
