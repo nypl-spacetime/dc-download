@@ -5,13 +5,14 @@ const argvOptions = {
     h: 'help',
     s: 'size',
     t: 'token',
-    u: 'uuids',
+    f: 'filename',
     o: 'output'
   },
   default: {
     s: 'q',
     o: './',
-    u: 'false'
+    u: 'false',
+    f: 'uuid'
   },
   boolean: [
     'help',
@@ -27,16 +28,32 @@ const got = require('got')
 const chalk = require('chalk')
 const digitalCollections = require('digital-collections')
 
+const filenameFields = [
+  {
+    filename: 'image',
+    description: 'uses the image ID as filename (example: "<imageId>.jpeg")'
+  },
+  {
+    filename: 'uuid',
+    description: ' uses the UUID as filename (example: "<uuid>.jpeg")',
+    default: true
+  },
+  {
+    filename: 'page',
+    description: ' uses the page number as filename (example: "<page>.jpeg")'
+  }
+]
+
 const sizes = [
   {
     type: 'b',
-    description: 'Center cropped thumbnail .jpeg (100x100 pixels)',
+    description: 'center cropped thumbnail .jpeg (100x100 pixels)',
     extension: 'jpeg',
     pdOnly: false
   },
   {
     type: 'f',
-    description: 'Cropped .jpeg (140 pixels tall with variable width)',
+    description: 'cropped .jpeg (140 pixels tall with variable width)',
     extension: 'jpeg',
     pdOnly: false
   },
@@ -102,7 +119,12 @@ if (!sizes.map((size) => size.type).includes(argv.size)) {
   errors.push('Image size invalid')
 }
 
+if (!filenameFields.map((field) => field.filename).includes(argv.filename)) {
+  errors.push('Filename field invalid')
+}
+
 const defaultSize = sizes.filter((size) => size.default)[0].type
+const defaultFilename = filenameFields.filter((filename) => filename.default)[0].filename
 
 if (!argv.token && !process.env.DIGITAL_COLLECTIONS_TOKEN) {
   errors.push('Digital Collections API access token not set')
@@ -113,15 +135,18 @@ if (showHelp || errors.length) {
     errors.length ? `${chalk.red(errors.join('\n'))}\n` : null,
     'NYPL Digital Collections Image Downloader - see https://github.com/nypl-spacetime/dc-download',
     '',
-    'Usage: dc-download [-h] [-n] [-t <api-token>] [-o <path>] [-s <size>] <uuid-of-item>',
-    '  -t, --token     Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
-    `  -s, --size      size/type of images to be downloaded - see below (default is ${defaultSize})`,
-    '  -u, --uuids     use UUIDs of captures for filenames (instead of page number)',
-    '  -o, --output    output directory (default is current directory)',
+    'Usage: dc-download [-h] [-n] [-t <api-token>] [-o <path>] [-f <filename>] [-s <size>] <uuid-of-item>',
+    '  -t, --token      Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
+    `  -s, --size       size/type of images to be downloaded - see below (default is "${defaultSize}")`,
+    `  -f, --filename   field to be used as filename for downloaded files - see below (default is "${defaultFilename}")`,
+    '  -o, --output     output directory (default is current directory)',
     '',
     'Possible image sizes and types:',
-    ...sizes.map((size) => `  ${size.type}    ${size.description}${size.pdOnly ? '*' : ''}`),
-    'Sizes with * exist only for public domain assets',
+    ...sizes.map((size) => `   ${size.type}        ${size.description}${size.pdOnly ? '*' : ''}`),
+    '            (sizes with * exist only for public domain assets)',
+    '',
+    'Possible filename fields:',
+    ...filenameFields.map((filename) => `   ${filename.filename}    ${filename.description}`),
     '',
     'Go to http://digitalcollections.nypl.org/ to browse NYPL\'s Digital Collections'
   ]
@@ -158,6 +183,12 @@ H(digitalCollections.captures(options))
     const parts = capture.sortString.split('|')
     const page = parseInt(parts[parts.length - 1])
 
+    const filenames = {
+      image: imageId,
+      uuid,
+      page
+    }
+
     let url
     const size = sizes.filter((size) => size.type === argv.size)[0]
     if (argv.size === 'T') {
@@ -177,12 +208,7 @@ H(digitalCollections.captures(options))
       url = imageUrl(imageId, size.type)
     }
 
-    let filename
-    if (argv.uuids) {
-      filename = uuid
-    } else {
-      filename = page
-    }
+    const filename = filenames[argv.filename]
 
     console.log(`  Downloading image ${++count}`)
 
