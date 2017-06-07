@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+const path = require('path')
+const fs = require('fs')
+const H = require('highland')
+const got = require('got')
+const chalk = require('chalk')
+const digitalCollections = require('digital-collections')
+
 const argvOptions = {
   alias: {
     h: 'help',
@@ -12,7 +19,7 @@ const argvOptions = {
     s: 'q',
     o: './',
     u: 'false',
-    f: 'uuid'
+    f: 'piu'
   },
   boolean: [
     'help',
@@ -21,26 +28,19 @@ const argvOptions = {
 }
 
 const argv = require('minimist')(process.argv.slice(2), argvOptions)
-const path = require('path')
-const fs = require('fs')
-const H = require('highland')
-const got = require('got')
-const chalk = require('chalk')
-const digitalCollections = require('digital-collections')
 
 const filenameFields = [
   {
-    filename: 'image',
-    description: 'uses the image ID as filename (example: "<imageId>.jpeg")'
+    field: 'i',
+    description: 'image ID'
   },
   {
-    filename: 'uuid',
-    description: ' uses the UUID as filename (example: "<uuid>.jpeg")',
-    default: true
+    field: 'u',
+    description: 'UUID'
   },
   {
-    filename: 'page',
-    description: ' uses the page number as filename (example: "<page>.jpeg")'
+    field: 'p',
+    description: 'page number'
   }
 ]
 
@@ -116,15 +116,26 @@ if (argv._.length > 1) {
 const uuid = argv._[0]
 
 if (!sizes.map((size) => size.type).includes(argv.size)) {
-  errors.push('Image size invalid')
+  errors.push(`Image size invalid: "${argv.size}"`)
 }
 
-if (!filenameFields.map((field) => field.filename).includes(argv.filename)) {
-  errors.push('Filename field invalid')
+if (argv.filename && argv.filename.split) {
+  argv.filename.split('').forEach((field) => {
+    if (!filenameFields.map((field) => field.field).includes(field)) {
+      errors.push(`Filename field invalid: "${field}"`)
+    }
+  })
+}
+
+if (!argv.filename.length) {
+  errors.push(`Filename fields not specified`)
+}
+
+if (argv.filename.length > filenameFields.length) {
+  errors.push(`Too many filename fields (at most ${filenameFields.length} allowed)`)
 }
 
 const defaultSize = sizes.filter((size) => size.default)[0].type
-const defaultFilename = filenameFields.filter((filename) => filename.default)[0].filename
 
 if (!argv.token && !process.env.DIGITAL_COLLECTIONS_TOKEN) {
   errors.push('Digital Collections API access token not set')
@@ -132,23 +143,27 @@ if (!argv.token && !process.env.DIGITAL_COLLECTIONS_TOKEN) {
 
 if (showHelp || errors.length) {
   const help = [
-    errors.length ? `${chalk.red(errors.join('\n'))}\n` : null,
     'NYPL Digital Collections Image Downloader - see https://github.com/nypl-spacetime/dc-download',
     '',
     'Usage: dc-download [-h] [-n] [-t <api-token>] [-o <path>] [-f <filename>] [-s <size>] <uuid-of-item>',
-    '  -t, --token      Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
-    `  -s, --size       size/type of images to be downloaded - see below (default is "${defaultSize}")`,
-    `  -f, --filename   field to be used as filename for downloaded files - see below (default is "${defaultFilename}")`,
-    '  -o, --output     output directory (default is current directory)',
+    '   -t, --token      Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
+    `   -s, --size       size/type of images to be downloaded - see below (default is "${defaultSize}")`,
+    `   -f, --filename   fields to be used as filename for downloaded files - see below (default is "${argvOptions.default.f}")`,
+    '   -o, --output     output directory (default is current directory)',
     '',
     'Possible image sizes and types:',
-    ...sizes.map((size) => `   ${size.type}        ${size.description}${size.pdOnly ? '*' : ''}`),
+    ...sizes.map((size) => `    ${size.type}    ${size.description}${size.pdOnly ? '*' : ''}`),
     '            (sizes with * exist only for public domain assets)',
     '',
     'Possible filename fields:',
-    ...filenameFields.map((filename) => `   ${filename.filename}    ${filename.description}`),
+    ...filenameFields.map((field) => `    ${field.field}    ${field.description}`),
+    '  Examples:',
+    '    "piu" will yield "<pageNum>.<imageId>.<uuid>.jpeg";',
+    '    "u" will yield "<uuid>.jpeg";',
+    '    Et cetera!',
     '',
-    'Go to http://digitalcollections.nypl.org/ to browse NYPL\'s Digital Collections'
+    'Go to http://digitalcollections.nypl.org/ to browse NYPL\'s Digital Collections',
+    errors.length ? `\nErrors:\n${errors.map((error) => ' - ' + chalk.red(error)).join('\n')}\n` : null,
   ]
 
   console.log(help.join('\n').trim())
@@ -183,10 +198,10 @@ H(digitalCollections.captures(options))
     const parts = capture.sortString.split('|')
     const page = parseInt(parts[parts.length - 1])
 
-    const filenames = {
-      image: imageId,
-      uuid,
-      page
+    const fields = {
+      i: imageId,
+      u: uuid,
+      p: page
     }
 
     let url
@@ -208,7 +223,7 @@ H(digitalCollections.captures(options))
       url = imageUrl(imageId, size.type)
     }
 
-    const filename = filenames[argv.filename]
+    const filename = argv.filename.split('').map((field) => fields[field]).join('.')
 
     console.log(`  Downloading image ${++count}`)
 
