@@ -146,6 +146,7 @@ if (showHelp || errors.length) {
     'NYPL Digital Collections Image Downloader - see https://github.com/nypl-spacetime/dc-download',
     '',
     'Usage: dc-download [-h] [-t <api-token>] [-o <path>] [-f <filename>] [-s <size>] <uuid-of-item>',
+    '   -h, --help       displays this help message',
     '   -t, --token      Digital Collections API access token (or set $DIGITAL_COLLECTIONS_TOKEN), see http://api.repo.nypl.org/',
     `   -s, --size       size/type of images to be downloaded - see below (default is "${defaultSize}")`,
     `   -f, --filename   fields to be used as filename for downloaded files - see below (default is "${argvOptions.default.f}")`,
@@ -163,7 +164,7 @@ if (showHelp || errors.length) {
     '    Et cetera!',
     '',
     'Go to http://digitalcollections.nypl.org/ to browse NYPL\'s Digital Collections',
-    errors.length ? `\nErrors:\n${errors.map((error) => ' - ' + chalk.red(error)).join('\n')}\n` : null,
+    errors.length ? `\nErrors:\n${errors.map((error) => ' - ' + chalk.red(error)).join('\n')}\n` : null
   ]
 
   console.log(help.join('\n').trim())
